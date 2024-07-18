@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layouts/layout1}">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="_csrf" th:content="${_csrf.token}" />
+    <meta name="_csrf_header" th:content="${_csrf.headerName}" />
+    <title>상품 상세 페이지</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Thymeleaf layout -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
+          integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm"
+          crossorigin="anonymous">
+
+    <!-- 사용자 스크립트 추가 -->
+    <th:block layout:fragment="script">
+        <script th:inline="javascript">
+            // 초기값 설정
+            let slideIndex = 0; // 초기 슬라이드 인덱스를 0으로 설정
+
+            // 페이지 로드 시 실행되는 함수
+            document.addEventListener('DOMContentLoaded', function () {
+                showSlides(slideIndex); // 초기 슬라이드 표시
+            });
+
+            // 이전/다음 컨트롤 함수
+            function plusSlides(n) {
+                showSlides(slideIndex += n);
+            }
+
+            // 현재 슬라이드 표시 함수
+            function currentSlide(n) {
+                console.log(n);
+                showSlides(slideIndex = n);
+            }
+
+            // 슬라이드 표시 함수
+            function showSlides(n) {
+                const slides = document.getElementsByClassName("mySlides");
+                const dots = document.getElementsByClassName("dot");
+
+                // n을 슬라이드 인덱스로 조정
+                if (n >= slides.length) {
+                    slideIndex = 0;
+                } else if (n < 0) {
+                    slideIndex = slides.length - 1;
+                }
+
+                // 모든 슬라이드 숨기기
+                for (let i = 0; i < slides.length; i++) {
+                    slides[i].style.display = "none";
+                }
+
+                // 모든 점 초기화
+                for (let i = 0; i < dots.length; i++) {
+                    dots[i].classList.remove("active");
+                }
+
+                // 현재 슬라이드와 점 활성화
+                slides[slideIndex].style.display = "block";
+                dots[slideIndex].classList.add("active");
+            }
+
+
+            $(document).ready(function () {
+                calculateTotalPrice();
+
+                $("#count").change(function () {
+                    calculateTotalPrice();
+                });
+            });
+
+            function calculateTotalPrice() {
+                var count = $("#count").val();
+                var price = $("#price").val();
+                var totalPrice = price * count;
+                $("#totalPrice").html(totalPrice + '원');
+            }
+
+            function order() {
+                var token = $("meta[name='_csrf']").attr("content");
+                var header = $("meta[name='_csrf_header']").attr("content");
+
+                var url = "/order";
+                var paramData = {
+                    itemId: $("#itemId").val(),
+                    count: $("#count").val()
+                }
+
+                var param = JSON.stringify(paramData);
+
+                $.ajax({
+                    url: url,
+                    type: "POST",
+                    contentType: "application/json",
+                    data: param,
+                    beforeSend: function (xhr) {
+                        /*데이터 전송하기 전에 헤더에 csrf 값을 설정*/
+                        xhr.setRequestHeader(header, token);
+                    },
+                    dataType: "json",
+                    cache: false,
+                    success: function (result, status) {
+                        alert("주문이 완료 되었습니다.");
+                        location.href = '/';
+                    },
+                    error: function (jqXHR, status, error) {
+                        if (jqXHR.status == '401') {
+                            alert('로그인 후 이용해주세요.');
+                            location.href = '/members/login';
+                        } else {
+                            alert(jqXHR.responseText);
+                        }
+                    }
+                });
+            }
+
+            function addCart() {
+                var token = $("meta[name='_csrf']").attr("content");
+                var header = $("meta[name='_csrf_header']").attr("content");
+
+                var url = "/cart";
+
+                var paramData = {
+                    itemId: $("#itemId").val(),
+                    count: $("#count").val()
+                };
+                var param = JSON.stringify(paramData);
+
+                $.ajax({
+                    url: url,
+                    type: "POST",
+                    contentType: "application/json",
+                    data: param,
+                    beforeSend: function (xhr) {
+                        /*데이터 전송하기 전에 헤더에 csrf 값을 설정*/
+                        xhr.setRequestHeader(header, token);
+                    },
+                    dataType: "json",
+                    cache: false,
+                    success: function (result, status) {
+                        alert("상품을 장바구니에 담았습니다.");
+                        location.href = '/';
+                    },
+                    error: function (jqXHR, status, error) {
+                        if (jqXHR.status == '401') {
+                            alert('로그인 후 이용해주세요.');
+                            location.href = '/members/login';
+                        } else {
+                            alert(jqXHR.responseText);
+                        }
+                    }
+                });
+            }
+
+            $(document).ready(function() {
+                // 상세정보 섹션을 초기에 열린 상태로 설정
+                $('#itemDetailCollapse').collapse('show');
+
+                // 상세정보 섹션 토글 버튼에 아이콘 변경 이벤트 추가
+                $('.toggle-icon').html('&#9660;'); // 기본적으로 열린 상태이므로 화살표를 위쪽으로 변경
+                $('.toggle-icon').click(function() {
+                    $('#itemDetailCollapse').collapse('toggle'); // 클릭할 때마다 상세정보 섹션을 토글
+                    $(this).html($('#itemDetailCollapse').hasClass('show') ? '&#9650;' : '&#9660;');
+                });
+
+                // 배송정보 섹션 토글 버튼에 아이콘 변경 이벤트 추가
+                $('.delToggle-icon').click(function() {
+                    $('#deliveryCollapse').collapse('toggle'); // 클릭할 때마다 배송정보 섹션을 토글
+                    $(this).html($('#deliveryCollapse').hasClass('show') ? '&#x25B2;' : '&#x25BC;');
+                });
+
+                // 반품정보 섹션 토글 버튼에 아이콘 변경 이벤트 추가
+                $('.returnToggle-icon').click(function() {
+                    $('#returnCollapse').collapse('toggle'); // 클릭할 때마다 배송정보 섹션을 토글
+                    $(this).html($('#returnCollapse').hasClass('show') ? '&#x25B2;' : '&#x25BC;');
+                });
+
+                // A/S정보 섹션 토글 버튼에 아이콘 변경 이벤트 추가
+                $('.asToggle-icon').click(function() {
+                    $('#asCollapse').collapse('toggle'); // 클릭할 때마다 배송정보 섹션을 토글
+                    $(this).html($('#asCollapse').hasClass('show') ? '&#x25B2;' : '&#x25BC;');
+                });
+
+                // 세탁정보 섹션 토글 버튼에 아이콘 변경 이벤트 추가
+                $('.cleanToggle-icon').click(function() {
+                    $('#cleanCollapse').collapse('toggle'); // 클릭할 때마다 배송정보 섹션을 토글
+                    $(this).html($('#cleanCollapse').hasClass('show') ? '&#x25B2;' : '&#x25BC;');
+                });
+            });
+        </script>
+    </th:block>
+
+    <!-- 사용자 CSS 추가 -->
+    <th:block layout:fragment="css">
+        <style>
+            /* 여기에 CSS 스타일을 추가합니다. */
+            .container {
+                display: flex;
+                justify-content: space-between;
+                align-items: flex-start;
+                max-width: 100%;
+                margin: 0 auto;
+                padding: 20px;
+                height: 100%;
+            }
+
+            .slideshow-container {
+                flex: 1;
+                max-width: 50%;
+                position: relative;
+                padding-right:20px;
+            }
+
+            .mySlides {
+                display: none;
+                width: 100%;
+            }
+
+            img {
+                width: 100%;
+                height: 100%;
+            }
+
+            .prev, .next {
+                cursor: pointer;
+                position: absolute;
+                top: 50%;
+                width: auto;
+                margin-top: -22px;
+                padding: 16px;
+                color: white;
+                font-weight: bold;
+                font-size: 20px;
+                transition: 0.6s ease;
+                border-radius: 0 3px 3px 0;
+                user-select: none;
+                background-color: rgba(255, 255, 255, 0);
+            }
+
+            .next {
+                right: 0;
+                border-radius: 3px 0 0 3px;
+            }
+
+            .prev:hover, .next:hover {
+                background-color: rgba(0, 0, 0, 1);
+            }
+
+            .dot {
+                cursor: pointer;
+                height: 15px;
+                width: 15px;
+                margin: 0 2px;
+                background-color: #bbb;
+                border-radius: 50%;
+                display: inline-block;
+                transition: background-color 0.6s ease;
+            }
+
+            .active, .dot:hover {
+                background-color: #717171;
+            }
+
+            .dots {
+                text-align: center;
+            }
+
+            .product-info {
+                flex: 1;
+                max-width: calc(100% - 50%); /* 슬라이드쇼 너비를 제외한 공간 계산 */
+                margin-left: 20px; /* 슬라이드쇼와의 간격 조절 */
+                display: inline-block;
+                vertical-align: top; /* 상품 정보 영역 상단 정렬 */
+                padding-left: 40px; /* 내부 요소들의 왼쪽 여백 */
+                border-left: 1px solid #ccc; /* 왼쪽 테두리 추가 */
+            }
+
+            .product-info span {
+                font-size: 14px;
+                padding: 5px 10px;
+                border-radius: 4px;
+                color: #fff;
+            }
+
+
+
+            .product-info h2 {
+                margin-top: 8px; /* 제목 위 간격 */
+                font-size: 24px;
+                color: #333;
+            }
+
+            .product-info hr {
+                border: none;
+                border-top: 1px solid #747474;
+                margin: 10px 0;
+            }
+
+            .product-info .price {
+                font-size: 20px;
+                color: #f44336; /* 빨간색 가격 */
+            }
+
+            .product-info .quantity {
+                margin-top: 10px;
+            }
+
+            .product-info input[type="number"] {
+                width: 60px;
+                padding: 5px;
+                font-size: 16px;
+                text-align: center;
+            }
+
+            .product-info .payment-amount {
+                font-size: 18px;
+                font-weight: bold;
+                color: #333;
+            }
+
+            .product-info .buttons {
+                margin-top: 10px;
+            }
+
+            .product-info button {
+                padding: 10px 20px;
+                background-color: #333;
+                color: #fff;
+                border: none;
+                border-radius: 0px;
+                cursor: pointer;
+                transition: background-color 0.3s ease;
+            }
+
+            .product-info button:hover {
+                background-color: #555;
+            }
+
+            .product-info h5 {
+                margin-top: 20px;
+                font-size: 14px;
+                color: #333;
+            }
+
+            .product-info p {
+                line-height: 1.6;
+                color: #666;
+            }
+            .sell {
+                background-color: black;
+            }
+            .sold-out{
+                background-color: black;
+            }
+            .product-info h3 {
+                margin: 8px 0px 8px;
+                font-size: 20px;
+            }
+
+        </style>
+    </th:block>
+</head>
+
+<body>
+<div layout:fragment="content">
+    <input type="hidden" id="itemId" th:value="${item.id}">
+    <div class="container">
+        <div class="slideshow-container">
+            <!-- 각 이미지 슬라이드 -->
+            <div th:each="itemImg, itemIndex : ${item.itemImgDtoList}" class="mySlides">
+                <img th:if="${not #strings.isEmpty(itemImg.imgUrl)}" th:src="${itemImg.imgUrl}">
+            </div>
+
+            <!-- 이전/다음 버튼 -->
+            <a class="prev" onclick="plusSlides(-1)" style="color: white;">&#10094;</a>
+            <a class="next" onclick="plusSlides(1)" style="color: white; margin-right:20px;">&#10095;</a>
+
+            <!-- 점 표시 -->
+            <div class="dots">
+                <span class="dot" th:each="itemImg, itemIndex : ${item.itemImgDtoList}"
+                      onclick="currentSlide([[${itemIndex.index}]]);" th:id="'dot-'+${itemIndex.index}"></span>
+            </div>
+
+        </div>
+
+        <!-- 상품 정보 표시 영역 -->
+        <div class="product-info">
+            <span th:if="${item.itemSellStatus == T(com.WorksIn.constant.ItemSellStatus).SELL}" class="badge bg-dark-subtle text-dark-emphasis rounded-0">판매중</span>
+            <span th:unless="${item.itemSellStatus == T(com.WorksIn.constant.ItemSellStatus).SELL}" class="badge bg-danger-subtle text-danger-emphasis rounded-0">품절</span>
+            <h2 th:text="${item.itemNm}"></h2>
+
+            <div style="font-size: 14px;">
+                <input type="hidden" th:value="${item.price}" id="price" name="price">
+                정상가 <span style="color:black; padding:0px;" th:text="${item.price}"></span>원
+            </div>
+            <hr>
+            <div class="quantity">
+                <span style="color: black; padding:0px;">수량</span>
+                <input type="number" name="count" id="count" value="1" min="1">
+            </div>
+
+
+            <div>
+                <h3 name="totalPrice" id="totalPrice" class="font-weight-bold"></h3>
+            </div>
+
+            <div th:if="${item.itemSellStatus == T(com.WorksIn.constant.ItemSellStatus).SELL}" class="buttons">
+                <button type="button" onclick="addCart()" style="background-color: #D5D5D5; color:black;">장바구니 담기</button>
+                <button type="button" onclick="order()">주문하기</button>
+            </div>
+            <hr>
+            <div th:unless="${item.itemSellStatus == T(com.WorksIn.constant.ItemSellStatus).SELL}" class="buttons">
+                <button type="button">품절</button>
+            </div>
+            <div>
+                <h5>상세정보 <span class="toggle-icon" style="cursor:pointer; color:black; text-align:right;">&#xF282;</span> </h5>
+                <div class="collapse" id="itemDetailCollapse">
+                    <p th:text="${item.itemDetail}" style="font-size: 13px;"></p>
+                </div>
+            </div>
+            <hr>
+            <div>
+                <h5>배송 안내 <span class="delToggle-icon" style="cursor:pointer; color:black;">&#x25BC;</span> </h5>
+                <div class="collapse" id="deliveryCollapse">
+                    <p style="font-size: 13px;">CJ대한통운 (1588-1255) / 우체국 택배 (1588-1300)<br>
+                        배송 지역 : 전국 (일부 지역 제외)<br>
+                        배송비 : 10만원 이상 구매 시 무료 배송<br>
+                        배송 기간 : 평일 오후 2시 이전 결제 완료 된 주문건은 당일 출고되며 배송은 1~3일 정도 소요됩니다.</p>
+                </div>
+            </div>
+            <hr>
+            <div>
+                <h5>반품 안내 <span class="returnToggle-icon" style="cursor:pointer; color:black;">&#x25BC;</span> </h5>
+                <div class="collapse" id="returnCollapse">
+                    <p style="font-size: 13px;">반품 신청은 상품 수령 후 7일 이내 신청하시면 기사님께서 빠른 시일 내에 수거하실 예정입니다.<br>
+                        단순 변심으로 인한 교환/반품 신청 시 택배비용은 고객님 부담이오니 이점 양해 바랍니다.<br>
+                        웍스아웃 (마이페이지 > 주문 내역 > 주문서 상세 페이지 조회 > 교환/환불 신청)</p>
+                </div>
+            </div>
+            <hr>
+            <div>
+                <h5>A/S 안내 <span class="asToggle-icon" style="cursor:pointer; color:black;">&#x25BC;</span> </h5>
+                <div class="collapse" id="asCollapse">
+                    <p style="font-size: 13px;">(주)웍스아웃 및 정식 판매처를 통하여 구입한 모든 제품은 A/S를 받으실 수 있습니다.</p>
+                </div>
+            </div>
+            <hr>
+            <div>
+                <h5>세탁 및 취급 시 주의사항 <span class="cleanToggle-icon" style="cursor:pointer; color:black;">&#x25BC;</span> </h5>
+                <div class="collapse" id="cleanCollapse">
+                    <p style="font-size: 13px;">제품 혼용율에 따라 세탁 및 취급 유의 사항이 변경될 수 있습니다.<br>
+                        반드시 부착되어 있는 케어라벨 내용을 확인하신 후 세탁하시기 바랍니다.<br>
+                        따라서 세탁시에는 반드시 세탁 및 취급 시 주의사항 페이지를 참고 부탁 드립니다.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+
+</html>

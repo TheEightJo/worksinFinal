@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+  layout:decorate="~{layouts/layout1}">
+
+<head>
+  <meta name="_csrf" th:content="${_csrf.token}" />
+  <meta name="_csrf_header" th:content="${_csrf.headerName}" />
+</head>
+
+  <!--사용자 css 추가-->
+<th:block layout:fragment="css">
+  <style>
+    body {
+      padding: 0;
+      margin: 0;
+    }
+
+    .container {
+      max-width: 90%;
+      /* 원하는 너비로 조정 */
+    }
+
+    main {
+      padding: 0 20px;
+      /* 좌우 패딩 조정 */
+    }
+
+    .table-container {
+      width: 100%;
+      /* 테이블 컨테이너가 전체 너비를 차지하도록 조정 */
+    }
+
+    .repImg {
+      width: 100%;
+      height: 150px;
+    }
+
+    .number>button {
+      background-color: white;
+      color: lightgray;
+    }
+
+    .number>p {
+      border: 1px solid lightgray;
+      /* border 속성에 solid 값을 추가해야 합니다 */
+    }
+  </style>
+</th:block>
+
+<th:block layout:fragment="script">
+  <script th:inline="javascript">
+
+    $(document).ready(function () {
+      $("input[name=cartChkBox]").change(function () {
+        getOrderTotalPrice();
+      });
+      // 수량 증가 및 감소 버튼에 이벤트 리스너 추가
+      $(document).on('click', '#minus', function () {
+        updateCount(this, -1);
+      });
+      $(document).on('click', '#plus', function () {
+        updateCount(this, 1);
+      });
+    });
+    function getOrderTotalPrice() {
+      var orderTotalPrice = 0;
+      $("input[name=cartChkBox]:checked").each(function () {
+        var cartItemId = $(this).val();
+        var price = $("#price_" + cartItemId).attr("data-price")
+        var count = $("#count_" + cartItemId).val()
+        orderTotalPrice += price * count
+      })
+
+      $("#orderTotalPrice").html(orderTotalPrice + '원')
+    }
+
+    function updateCount(button, increment) {
+      var countElement = $(button).closest('tr').find('[name="count"]');
+      var currentCount = parseInt(countElement.text());
+      var newCount = currentCount + increment;
+
+      if (newCount < 1) return; // 최소 수량 1
+
+      countElement.text(newCount);
+      var cartItemId = countElement.attr('id').split('_')[1];
+      var price = $("#price_" + cartItemId).data("price")
+      var totalPrice = newCount * price
+      $("#totalPrice_" + cartItemId).html(totalPrice + '원')
+      getOrderTotalPrice();
+      updateCartItemCount(cartItemId, newCount)
+    }
+    function checkAll() {
+      if ($("#checkAll").prop("checked")) {
+        $("input[name=cartChkBox]").prop("checked", true)
+      }
+      else {
+        $("input[name=cartChkBox]").prop("checked", false)
+      }
+      getOrderTotalPrice();
+    }
+    function updateCartItemCount(cartItemId, count) {
+      var token = $("meta[name='_csrf']").attr("content");
+      var header = $("meta[name='_csrf_header']").attr("content");
+      var url = "/cartItem/" + cartItemId + "?count=" + count;
+
+      $.ajax({
+        url: url,
+        type: "PATCH",
+        beforeSend: function (xhr) {
+          xhr.setRequestHeader(header, token);
+        },
+        dataType: "json",
+        cache: false,
+        success: function (result, status) {
+          console.log("cartItem count update success");
+        },
+        error: function (jqXHR, status, error) {
+          if (jqXHR.status == '401') {
+            alert('로그인 후 이용해주세요.');
+            location.href = '/members/login';
+          }
+          else {
+            alert(jqXHR.responseText);
+          }
+        }
+      })
+    }
+    function deleteCartItem(obj) {
+      var cartItemId = obj.dataset.id;
+      var token = $("meta[name='_csrf']").attr("content");
+      var header = $("meta[name='_csrf_header']").attr("content");
+
+      var url = "/cartItem/" + cartItemId;
+
+      $.ajax({
+        url: url,
+        type: "DELETE",
+        beforeSend: function (xhr) {
+          xhr.setRequestHeader(header, token);
+        },
+        dataType: "json",
+        cache: false,
+        success: function (result, status) {
+          location.href = '/cart'; // 다시 본인을 부름 이유 삭제로 인한 화면 변경이 필요하기 땜누
+        },
+        error: function (jqXHR, status, error) {
+          if (jqXHR.status == '401') {
+            alert('로그인 후 이용해주세요.');
+            location.href = '/members/login';
+          }
+          else {
+            alert(jqXHR.responseText);
+          }
+        }
+      })
+    }
+    function orders() {
+      alert("abc");
+      var token = $("meta[name='_csrf']").attr("content");
+      var header = $("meta[name='_csrf_header']").attr("content");
+
+      var url = "/cart/orders";
+
+      var dataList = new Array(); // 배열 생성
+      var paramData = new Object(); // 객체 생성
+
+      // 체크된 카트 아이템들을 순회하면서 데이터를 추출하여 paramData에 추가
+      $("input[name=cartChkBox]:checked").each(function () {
+        var cartItemId = $(this).val();
+        alert("카트 아이템 아이디" + cartItemId);
+        // PaymentDto와 일치하는 객체 생성
+        var data = {
+          cartItemId: cartItemId, // cartItemId 필드에 해당하는 값을 넣음
+          // 다른 필드들도 필요한 경우 여기에 추가
+        };
+
+        dataList.push(data); // dataList 배열에 객체 추가
+      });
+      if (dataList.length === 0) {
+        alert('선택된 항목이 없습니다.');
+        return;
+      }
+
+      paramData['cartOrderDtoList'] = dataList; // paramData 객체에 dataList 추가
+      var param = JSON.stringify(paramData); // JSON 문자열로 변환
+      alert(param);
+      $.ajax({
+        url: url,
+        type: "POST",
+        contentType: "application/json",
+        data: param, // 생성한 JSON 데이터를 서버로 전송
+        beforeSend: function (xhr) {
+          // 데이터 전송 전에 CSRF 헤더 설정
+          xhr.setRequestHeader(header, token);
+        },
+        // dataType: "json",
+        cache: false,
+        success: function (result, status) {
+          var orderUid = result;
+          alert('주문이 완료 되었습니다.');
+          location.href = '/cart/payment/' + orderUid;
+        },
+        error: function (jqXHR, status, error) {
+          if (jqXHR.status == '401') {
+            alert('로그인 후 이용해주세요.');
+            location.href = '/members/login';
+          } else {
+            alert("안녕 난 status : " + status);
+            alert("안녕 난 error : " +error);
+            alert(jqXHR.responseText+" : jqXHR.responseText");
+          }
+        }
+      });
+    }
+  </script>
+</th:block>
+
+<body>
+  <div layout:fragment="content">
+    <div class="d-flex flex-column min-vh-100">
+
+      <div class="container">
+        <main>
+          <div class="row g-5 mt-5">
+            <div class="col-md-5 col-lg-3 order-md-last border border-lightgray py-3 h-50">
+              <h4 class="d-flex justify-content-between align-items-center mb-3">
+                <span class="text-black">최대할인금액</span>
+              </h4>
+              <ul class="list-group-flush mx-auto mb-3">
+                <li class="list-group-item d-flex justify-content-between my-3 ">
+                  <div>
+                    <p class="text-12 my-auto py-2">보유 쿠폰</p>
+                  </div>
+                  <div class="dropdown">
+                    <button class="btn btn-info dropdown-toggle bg-white text-12 border-white" type="button"
+                      data-bs-toggle="dropdown" aria-expanded="false">
+                      <p style="color: black; display: inline;">쿠폰 선택</p>
+                    </button>
+                    <ul class="dropdown-menu">
+                      <li>
+                        <p style="text-align: center;">보유 쿠폰 없음</p>
+                      </li>
+                    </ul>
+                  </div>
+                </li>
+                <li class="list-group-item d-flex justify-content-between my-3">
+                  <div>
+                    <p class="text-12 my-auto py-2">쿠폰 적용</p>
+                  </div>
+
+                  <div>
+                    <p class="text-12 my-auto ms-5 py-2" style="display: inline-block;">0원</p>
+                    <button class="btn bg-black h-5" type="button">
+                      <p class="text-white text-12" style="display: inline;">적용</p>
+                    </button>
+                  </div>
+                </li>
+                <li class="list-group-item d-flex justify-content-between my-3">
+                  <div>
+                    <p class="text-12 my-auto py-2">총 할인 예상 금액
+                    </p>
+                  </div>
+
+                  <div>
+                    <p class="text-12 my-auto ms-5 py-2" style="display: inline-block;">0원</p>
+                  </div>
+                </li>
+                <hr style="color:lightgray">
+                <li class="list-group-item d-flex justify-content-between my-3">
+                  <div>
+                    <p class="text-12 my-auto py-2">상품 금액</p>
+                  </div>
+
+                  <div>
+                    <p class="text-12 my-auto ms-5 py-2" style="display: inline-block;"
+                      th:text="${#numbers.formatInteger(priceHap,3,'COMMA')}+'원'"></p>
+                  </div>
+                </li>
+                <li class="list-group-item d-flex justify-content-between my-3">
+                  <div>
+                    <p class="text-12 my-auto py-2">상품 할인</p>
+                  </div>
+
+                  <div>
+                    <p class="text-12 my-auto ms-5 py-2" style="display: inline-block;">0원</p>
+                  </div>
+                </li>
+                <li class="list-group-item d-flex justify-content-between my-3">
+                  <div>
+                    <p class="text-12 my-auto py-2">쿠폰 할인</p>
+                  </div>
+                  <div>
+                    <p class="text-12 my-auto ms-5 py-2" style="display: inline-block;">0원</p>
+                  </div>
+                </li>
+                <li class="list-group-item d-flex justify-content-between my-3">
+                  <div>
+                    <p class="text-12 my-auto py-2">적립금 할인</p>
+                  </div>
+                  <div>
+                    <p class="text-12 my-auto ms-5 py-2" style="display: inline-block;">0원</p>
+                  </div>
+                </li>
+                <li class="list-group-item d-flex justify-content-between my-3">
+                  <div>
+                    <p class="text-12 my-auto py-2">배송비</p>
+                  </div>
+                  <div>
+                    <p class="text-12 my-auto ms-5 py-2" style="display: inline-block;">0원</p>
+                  </div>
+                </li>
+                <hr style="color:lightgray">
+                <li class="list-group-item d-flex justify-content-between">
+                  <span>총 결제 금액</span>
+                  <p class="text-12 text-danger" th:text="${#numbers.formatInteger(priceHap,3,'COMMA')}+'원'"></p>
+                </li>
+              </ul>
+
+
+              <div>
+                <button class="btn bg-black h-4 w-100" type="button" onclick="orders()">
+                  <p class="text-white text-12 my-auto">주문하기</p>
+                </button>
+              </div>
+
+            </div>
+            <div class="col-md-7 col-lg-9">
+              <h6 class="mb-3" style="display: inline;">장바구니</h6>
+              <h6 class="mb-3" style="float: right;">선택항목삭제</h6>
+              <div class="border border-white table-container">
+                <table class="table border-white">
+                  <thead>
+                    <tr class="table-light">
+                      <th class="table-light pl-1"><input type="checkbox" name="itemChk" id="checkAll"
+                          onclick="checkAll()"></th>
+                      <th class="table-light">상품정보</th>
+                      <th class="table-light">수량</th>
+                      <th class="table-light">가격</th>
+                      <th class="table-light">비고</th>
+                    </tr>
+                  </thead>
+                  <tbody class="my-5">
+                    <tr th:each="cartItem : ${cartItems}">
+                      <td class="text-center align-middle">
+                        <input type="checkbox" name="cartChkBox" th:value="${cartItem.cartItemId}">
+                      </td>
+                      <td class="d-flex align-middle">
+                        <div class="repImgDiv">
+                          <img th:src="${cartItem.imgUrl}" class="rounded repImg" th:alt="${cartItem.itemNm}">
+                        </div>
+                        <div class="ms-2 m-auto align-middle">
+                          <span th:text="${cartItem.itemNm}" class="f24 font-weight-bold"></span>
+                          <span class="f24 font-weight-bold">브랜드</span>
+                        </div>
+                      </td>
+                      <td class="align-middle" style="width:30%;">
+                        <table>
+                          <tr>
+                            <td class="border">
+                              <button class="px-2 border border-white text-12 bg-white text-black-50"
+                                id="minus">-</button>
+                            </td>
+                            <td class="align-middle border px-3 text-black-50" name="count"
+                              id="count_${cartItem.cartItemId}" th:text="${cartItem.count}">
+                            </td>
+                            <td class="border">
+                              <button class="px-2 border border-white text-12 bg-white text-black-50"
+                                id="plus">+</button>
+                            </td>
+                          </tr>
+                        </table>
+                      </td>
+                      <td class="align-middle">
+                        <span id="price_${cartItem.cartItemId}" data-price="${cartItem.price}"
+                          th:text="${#numbers.formatInteger(cartItem.price,3,'COMMA')}+'원'"
+                          class="align-self-center mr-2"></span>
+                      </td>
+                      <td class="align-middle">
+                        <button type="button" class="close" aria-label="Close"
+                          style="background-color:white; border:none;">
+                          <span aria-hidden="true" th:data-id="${cartItem.cartItemId}"
+                            onclick="deleteCartItem(this)"><svg xmlns="http://www.w3.org/2000/svg" width="16"
+                              height="16" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
+                              <path
+                                d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z" />
+                              <path
+                                d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z" />
+                            </svg></span>
+                        </button>
+                      </td>
+                    </tr>
+                    <td th:if="${cartItems}==null" class="my-5 h-9" colspan="5">
+                      <h6 style="text-align: center;">장바구니에 상품이 없습니다.</h6>
+                    </td>
+                  </tbody>
+                  <tfoot>
+                    <tr>
+                      <td colspan="5"><button
+                          class="button py-2 h-9 outlined-gray-900 my-16 text-12 font-normal w-100 bg-white"
+                          onclick="location.href = '/' ">계속 쇼핑하기</button></td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
+    </div>
+  </div>
+</body>
+
+</html>

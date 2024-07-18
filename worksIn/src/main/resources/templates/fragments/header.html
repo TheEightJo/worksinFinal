@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+  <style>
+    .btn-search {
+      padding: 0.375rem 0.75rem; /* 기본 버튼의 패딩 값을 조정 */
+      font-size: 0.875rem; /* 버튼의 글자 크기 조정 */
+    }
+    .custom-nav {
+        height: 100%; /* 원하는 높이 값으로 설정 */
+        line-height: 100%; /* 네비게이션 바의 텍스트를 수직 가운데 정렬하기 위한 line-height 설정 */
+    }
+    .nav-scroller .nav {
+        height: 100px; /* 원하는 높이 값으로 설정 */
+        line-height: 100px; /* 텍스트를 수직 가운데 정렬하기 위한 line-height 설정 */
+    }
+  </style>
+</head>
+<body>
+<div th:fragment="header">
+  <div class="w-100">
+    <header class="border-bottom lh-1 py-4">
+      <div class="row flex-nowrap justify-content-between align-items-center" style="font-size:13px;">
+        <div class="col-4" style="padding:70px 0px 0px;">
+          <a class="link-secondary mx-5"></a>
+          <a class="link-secondary" href="/admin/item/new" sec:authorize="hasAnyAuthority('ROLE_ADMIN')">상품등록</a>
+          <a class="link-secondary mx-5" href="/admin/items" sec:authorize="hasAnyAuthority('ROLE_ADMIN')">상품관리</a>
+        </div>
+        <div class="col-4 text-center">
+          <a class="blog-header-logo text-body-emphasis text-decoration-none" href="/">
+            <img src="/css/images/worksin.logo.png" style="max-width:350px; height:auto; padding-top:15px;">
+          </a>
+        </div>
+        <div class="col-4 d-flex justify-content-end align-items-center" style="padding:60px 0px 0px;">
+
+          <form class="d-flex" id="searchForm" style="margin-right: 30px;">
+            <input name="searchQuery" id="searchQuery" class="form-control" type="search"
+                   placeholder="Search" aria-label="Search">
+            <button class="btn btn-outline-dark my-2 my-sm-0 btn-search" type="submit">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor"
+                   stroke-linecap="round" stroke-linejoin="round" stroke-width="2" role="img"
+                   viewBox="0 0 24 24">
+                <title>Search</title>
+                <circle cx="10.5" cy="10.5" r="7.5" />
+                <path d="M21 21l-5.2-5.2" />
+              </svg>
+            </button>
+          </form>
+
+          <a class="navRight" aria-current="page" href="/cart" style="text-decoration: none; margin-right:30px; margin-left:30px; color:#1F2937;" sec:authorize="isAuthenticated()">
+            <img src="/css/images/free-icon-shopping-cart-483283.png" style="max-width: 20px; height: auto;">
+          </a>
+          <a class="navRight" aria-current="page" href="/members/login" style="text-decoration: none; margin-right:60px; color:#1F2937;" sec:authorize="isAnonymous()">
+            <img src="/css/images/free-icon-user-5264565.png" style="max-width: 20px; height: auto;">
+          </a>
+          <a class="navRight" aria-current="page" href="/members/modify" sec:authorize="isAuthenticated()" style="text-decoration: none; margin-right:30px; color:#1F2937;">
+            <img src="/css/images/free-icon-edit-info-9424666.png" style="max-width: 20px; height: auto;">
+          </a>
+          <a class="navRight" aria-current="page" href="/members/logout" style="text-decoration: none; margin-right:60px; color:#1F2937;" sec:authorize="isAuthenticated()">
+            <img src="/css/images/logout.png" style="max-width: 20px; height: auto;">
+          </a>
+        </div>
+      </div>
+    </header>
+
+    <div class="nav-scroller py-1 mb-3 border-bottom w-100" style="font-weight:bold;">
+      <nav class="nav nav-underline justify-content-center custom-nav">
+        <a class="nav-item nav-link link-body-emphasis mx-5" href="/category/man">MAN
+          <img src="/css/images/free-icon-clothes-11408592.png" style="max-width: 30px; height: auto;">
+        </a>
+        <a class="nav-item nav-link link-body-emphasis mx-5" href="/category/woman">WOMAN
+          <img src="/css/images/free-icon-woman-clothes-4273296.png" style="max-width: 30px; height: auto;">
+        </a>
+        <a class="nav-item nav-link link-body-emphasis mx-5" href="/category/life">LIFE
+          <img src="/css/images/free-icon-home-12482045.png" style="max-width: 30px; height: auto;">
+        </a>
+        <a class="nav-item nav-link link-body-emphasis mx-5" href="/category/skate">SKATE
+          <img src="/css/images/free-icon-skateboard-5023570.png" style="max-width: 30px; height: auto;">
+        </a>
+
+      </nav>
+    </div>
+  </div>
+</div>
+</body>
+</html>

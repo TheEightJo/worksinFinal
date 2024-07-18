@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/layout1}">
+
+
+
+<!-- 사용자 스크립트 추가 -->
+<th:block layout:fragment="script">
+    <script th:inline="javascript">
+        var pageNumber = 0;
+        var iScroll = true;
+
+            $(document).ready(function() {
+              // 이미지 슬라이드
+              $('#carouselExample').carousel();
+
+              infinityScroll();
+
+              $(window).scroll(scrollHandler);
+
+              $('#searchForm').submit(function(e) {
+                  e.preventDefault();
+                  pageNumber = 0; // 검색 시 페이지 번호 초기화
+                  $('#item-list').empty(); // 기존 아이템 목록 삭제
+                  $('#searchResultMessage').empty(); // 기존 검색 결과 메시지 삭제
+                  iScroll = true; // 무한 스크롤 다시 활성화
+                  var searchQuery = $('#searchQuery').val();
+                  if (searchQuery) {
+                    $('#searchResultMessage').html(`<p style="text-align:center; margin-top:10px; font-size:24px;">${searchQuery} 검색결과</p>`);
+                  }
+                  infinityScroll(searchQuery);
+              });
+            });
+
+            // 무한스크롤 기능
+            function scrollHandler() {
+              //스크롤이 가장 아래에 닿으면 실행됨
+              if(iScroll === true && $(window).scrollTop() + $(window).height() >= $(document).height() - 30) {
+                pageNumber++;
+                var searchQuery = $('#searchQuery').val(); // 현재 검색어 가져오기
+                infinityScroll(searchQuery);
+              }
+            }
+
+            function infinityScroll(searchQuery = ''){
+
+              console.log("Fetching page: " + pageNumber);
+              iScroll = false;
+
+              $.ajax({
+                  url : "/infinity/woman",
+                  type : "GET",
+                  dataType : "json",
+                  data: {
+                    pageNumber: pageNumber,
+                    searchQuery: searchQuery // 검색어 추가
+                  },
+                  success : function(result, status){
+
+                      console.log(result);
+                      console.log(result.pageable.pageNumber);
+
+
+                      // 출력 데이터가 없다면 무한스크롤을 false(중지상태)로 설정
+                      if (result.content.length === 0) {
+                          iScroll = false;
+                      }
+                      else {
+                        for (var i=0; i<result.content.length; i++) {
+                          console.log("111");
+                          var itemList = result.content[i];
+                          var html =
+                                  $("<div class='col'>" +
+                                      "<div class='card'>" +
+                                        "<a href='/item/" + itemList.id + "' class='text-dark'>" +
+                                          "<img src='" + itemList.imgUrl + "' class='card-img-top' alt='" + itemList.itemNm + "' height='300'>" +
+                                          "<div class='card-body'>" +
+                                            "<span class='badge bg-dark-subtle text-dark-emphasis rounded-0' style='margin: 0px 0px 8px; border-radius:0px;'>" +
+                                                (itemList.itemSellStatus === "SELL" ? "판매중" : "") +
+                                            "</span>" +
+                                            "<span class='badge bg-danger-subtle text-danger-emphasis rounded-0' style='margin: 0px 0px 8px; border-radius:0px; '>" +
+                                                (itemList.itemSellStatus !== "SELL" ? "품절" : "") +
+                                            "</span>" +
+                                            "<h4 class='card-title' style='font-weight:bold;'>" + itemList.itemNm + "</h4>" +
+                                            "<p class='card-title'>" + itemList.price + "원</p>" +
+                                          "</div>" +
+                                        "</a>" +
+                                      "</div>" +
+                                    "</div>"
+                                  );
+
+                          $('#item-list').append(html);
+                        }
+                        iScroll = true; // 새로운 데이터가 있으면 무한 스크롤 다시 활성화
+                      }
+
+                  }
+              });
+            }
+    </script>
+</th:block>
+
+<!-- 사용자 css 추가 -->
+<th:block layout:fragment="css">
+    <style>
+        .col{
+          padding: 0px 6px;
+        }
+        .card{
+          margin:5px;
+          border:none;
+          border-radius:0px;
+
+        }
+        .text-dark{
+          text-decoration:none;
+        }
+        .card-title{
+          text-align: left;
+          font-size: 12px;
+
+        }
+        .card-img-top{
+          border-radius: 0px;
+          width: 100%;
+          height: auto;
+        }
+        .card-body{
+          padding: 8px 16px 16px 0px;
+        }
+    </style>
+</th:block>
+
+<div layout:fragment="content">
+    <div style="background: linear-gradient(to right, #EAEAEA, #A6A6A6); color: black; font-style: italic; height: 100px; display: flex; align-items: center; ">
+        <img src="/css/images/woman (1).png" style="max-width:50px; height:auto; margin-left:20px;">
+        <h3 style="padding: 10px; font-weight: bold; font-size:40px;">WOMAN</h3>
+    </div>
+
+    <input type="hidden" name="searchQuery" th:value="${itemSearchDto.searchQuery}">
+    <div th:if="${not #strings.isEmpty(itemSearchDto.searchQuery)}" class="center">
+        <p style="text-align:center; margin-top:10px; font-size:24px;" th:text="${itemSearchDto.searchQuery} + ' 검색결과'"></p>
+    </div>
+
+    <div id="searchResultMessage" class="center"></div>
+
+    <div class="row row-cols-4" style="margin-top:10px;" id="item-list">
+        <th:block th:each="item, status: ${items.getContent()}">
+            <!--
+            <div class="col">
+              <div class="card">
+
+                <a th:href="'/item/' + ${item.id}" class="text-dark">
+                  <img th:src="${item.imgUrl}" class="card-img-top" th:alt="${item.itemNm}"
+                       height="300">
+                  <div class="card-body">
+                    <span th:if="${item.itemSellStatus == T(com.WorksIn.constant.ItemSellStatus).SELL}"
+                          class="badge bg-dark-subtle text-dark-emphasis rounded-0" style="margin: 0px 0px 8px; border-radius:0px; ">판매중</span>
+                    <span th:unless="${item.itemSellStatus == T(com.WorksIn.constant.ItemSellStatus).SELL}"
+                          class="badge bg-danger-subtle text-danger-emphasis rounded-0" style="margin: 0px 0px 8px; border-radius:0px; ">품절</span>
+                    <h4 class="card-title" style="font-weight:bold;">[[${item.itemNm}]]</h4>
+                    <p class="card-title" >[[${item.price}]]원</p>
+                  </div>
+                </a>
+
+              </div>
+            </div>
+            -->
+        </th:block>
+    </div>
+</div>
+
+</html>

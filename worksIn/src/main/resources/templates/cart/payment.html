@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+    layout:decorate="~{layouts/layout1}">
+
+<head>
+    <meta name="_csrf" th:content="${_csrf.token}" />
+    <meta name="_csrf_header" th:content="${_csrf.headerName}">
+    <meta charset="UTF-8">
+</head>
+<!-- 사용자 CSS 추가 -->
+<th:block layout:fragment="css">
+    <style>
+        .fieldError {
+            color: red;
+            font-size: 12px;
+            margin-top: -5px;
+            margin-bottom: 5px;
+        }
+    </style>
+</th:block>
+<!-- 사용자 스크립트 추가 -->
+<th:block layout:fragment="script">
+    <script src="https://cdn.iamport.kr/js/iamport.payment-1.1.5.js"></script>
+    <script type="text/javascript" src="https://code.jquery.com/jquery-1.12.4.min.js"></script>
+    <script th:inline="javascript">
+        var IMP = window.IMP;
+        IMP.init("imp04818170");
+        let selectedOption = ''; // 배송 옵션
+        let shippingName = ''; //배송지명
+        let recipientName = ''; //수취인명
+        let recipientPhone = ''; // 수취인폰
+        let buyerPhone = ''; //구매자 폰
+
+
+        document.addEventListener('DOMContentLoaded', (event) => {
+            const dropdownItems = document.querySelectorAll('.dropdown-item');
+            const button = document.getElementById('baedal');
+
+            dropdownItems.forEach(item => {
+                item.addEventListener('click', (event) => {
+                    event.preventDefault();
+                    const selectedText = event.target.textContent;
+                    button.textContent = selectedText;
+                    selectedOption = selectedText;
+                    console.log('Selected Option:', selectedOption);
+                });
+            });
+
+            document.getElementById('phonenumber').addEventListener('input', updateBuyerPhone);
+            document.getElementById('textfield2').addEventListener('input', updateBuyerPhone);
+            document.getElementById('textfield3').addEventListener('input', updateBuyerPhone);
+            document.getElementById('phonenumber2').addEventListener('input', updateRecipientPhone);
+            document.getElementById('textfield6').addEventListener('input', updateRecipientPhone);
+            document.getElementById('textfield7').addEventListener('input', updateRecipientPhone);
+            document.getElementById('textfield4').addEventListener('input', (event) => {
+                shippingName = event.target.value;
+            });
+            document.getElementById('textfield5').addEventListener('input', (event) => {
+                recipientName = event.target.value;
+            });
+        });
+
+        function updateBuyerPhone() {
+            const part1 = document.getElementById('phonenumber').value;
+            const part2 = document.getElementById('textfield2').value;
+            const part3 = document.getElementById('textfield3').value;
+            buyerPhone = `${part1}-${part2}-${part3}`;
+            console.log('buyerPhone : ', buyerPhone);
+        }
+
+        function updateRecipientPhone() {
+            const part1 = document.getElementById('phonenumber2').value;
+            const part2 = document.getElementById('textfield6').value;
+            const part3 = document.getElementById('textfield7').value;
+            recipientPhone = `${part1}-${part2}-${part3}`;
+            console.log('RecipientPhone : ', recipientPhone);
+        }
+
+
+
+        function requestPay() {
+            var token = $("meta[name='_csrf']").attr("content");
+            var header = $("meta[name='_csrf_header']").attr("content");
+
+            var orderUid = [[${ requestDto.orderUid }]];
+            var itemName = [[${ requestDto.itemNm }]];
+            var paymentPrice = [[${ requestDto.orderPrice }]];
+            var buyerName = [[${ requestDto.buyerName }]];
+            var buyerEmail = [[${ requestDto.buyerEmail }]];
+            var buyerAddress = [[${ requestDto.buyerAddress }]];
+
+            console.log(orderUid);
+            console.log(itemName);
+            console.log(paymentPrice);
+            console.log(buyerName);
+            console.log(buyerEmail);
+            console.log(buyerAddress);
+
+
+            IMP.request_pay({
+                pg: 'html5_inicis.INIpayTest',
+                pay_method: 'card',
+                merchant_uid: orderUid, // 주문 번호
+                name: itemName, // 상품 이름
+                amount: paymentPrice, // 상품 가격
+                buyer_email: buyerEmail, // 구매자 이메일
+                buyer_name: buyerName, // 구매자 이름
+                buyer_tel: buyerPhone, // 임의의 값
+                buyer_addr: '인천시', // 구매자 주소
+                buyer_postcode: '123-456', // 임의의 값
+                custom_data: {
+                    delivery_request: selectedOption, // 선택한 배송 요청사항
+                    shipping_name: shippingName, // 배송지명
+                    recipient_name: recipientName // 수취인 이름
+                }
+            },
+                function (rsp) {
+                    console.log("aaaaa");
+                    if (rsp.success) {
+                        alert('call back!!: ' + JSON.stringify(rsp));
+                        // 결제 성공 시: 결제 승인 또는 가상계좌 발급에 성공한 경우
+                        // jQuery로 HTTP 요청
+                        $.ajax({
+                            url: "/cart/payment",
+                            method: "POST",
+                            beforeSend: function (xhr) {
+                                xhr.setRequestHeader(header, token);
+                            },
+                            headers: { "Content-Type": "application/json" },
+                            data: JSON.stringify({
+                                "payment_uid": rsp.imp_uid,      // 결제 고유번호
+                                "order_uid": rsp.merchant_uid   // 주문번호
+                            })
+                        }).done(function (response) {
+                            console.log(response);
+                            // 가맹점 서버 결제 API 성공시 로직
+                            alert('결제 완료!' + JSON.stringify(rsp));
+                            window.location.href = "/success-payment?" +
+                                "merchant_uid=" + encodeURIComponent(orderUid) +
+                                "&name=" + encodeURIComponent(itemName) +
+                                "&amount=" + encodeURIComponent(paymentPrice) +
+                                "&buyer_email=" + encodeURIComponent(buyerEmail) +
+                                "&buyer_name=" + encodeURIComponent(buyerName) +
+                                "&buyer_tel=" + encodeURIComponent(buyerPhone) +
+                                "&buyer_addr=" + encodeURIComponent('인천시') +
+                                "&delivery_request=" + encodeURIComponent(selectedOption) +
+                                "&shipping_name=" + encodeURIComponent(shippingName) +
+                                "&recipient_name=" + encodeURIComponent(recipientName) +
+                                "&recipient_phone=" + encodeURIComponent(recipientPhone);
+                        });
+                    } else {
+                        // alert("success? "+ rsp.success+ ", 결제에 실패하였습니다. 에러 내용: " + JSON.stringify(rsp));
+                        alert('결제 실패!' + JSON.stringify(rsp));
+                        window.location.href = "/fail-payment";
+                    }
+                });
+        }
+    </script>
+</th:block>
+
+<div layout:fragment="content">
+    <div class="d-flex flex-column min-vh-100">
+        <div class="container">
+            <div class="row gx-5">
+
+                <div class="col-md-8 col-lg-8 order-md-last">
+                    <h4 class="h2 pb-2 fs-3 fw-bolder">
+                        주문결제
+                    </h4>
+                    <hr>
+                    <h5>주문자 정보</h5>
+                    <form class="order" id="order" action="/submit" method="post">
+                        <div class="row d-flex" style="width:99%;">
+                            <div class="col">
+                                <label class="label text-12 cursor-pointer " for="textfield1">이름 *</label><br>
+                                <div th:if="${name != null}">
+                                    <input type="text" id="textfield1"
+                                        class="border-gray-400 w-full rounded-none text-12 h-9 w-100 p-2"
+                                        th:value="${name}" readonly style="background-color:lightgray;">
+                                </div>
+                                <div th:if="${name == null}">
+                                    <input type="text" id="textfield"
+                                        class="border-gray-400 w-full rounded-none text-12 h-9 w-100 p-2">
+                                </div>
+                            </div>
+                            <div class="col row">
+                                <label class="label text-12 cursor-pointer" for="phonenumber">핸드폰 번호 *</label><br>
+                                <input type="text" id="phonenumber" class="col-sm mx-1 p-2" placeholder="010">
+                                <input type="text" id="textfield2" class="col-sm  mx-1 p-2" placeholder="0000">
+                                <input type="text" id="textfield3" class="col-sm  mx-1 p-2" placeholder="0000">
+                            </div>
+                        </div>
+                        <hr>
+                        <p class="fs-4 pt-2 fw-bolder">배송 정보</p>
+                        <hr>
+                        <button type="button" class="btn btn-dark" style="border-radius : 0px">신규 입력</button>
+                        <div class="row d-flex my-3" style="width:99%;">
+                            <div class="col">
+                                <label class="label text-12 cursor-pointer" for="textfield4">배송지명 *</label><br>
+                                <input type="text" id="textfield4"
+                                    class="border-gray-400 w-full rounded-none text-12 h-9 w-100 p-2" placeholder="우리집">
+                            </div>
+                            <div class="col row">
+                                <label class="label text-12 cursor-pointer" for="textfield5">수취인 이름 *</label><br>
+                                <input type="text" id="textfield5"
+                                    class="border-gray-400 w-full rounded-none text-12 h-9 w-100 p-2" placeholder="홍길동">
+                            </div>
+                        </div>
+
+                        <div class=" my-3" style="width:99%;">
+                            <label class="label text-12 cursor-pointer" for="phonenumber2">핸드폰 번호 *</label><br>
+                            <input type="text" placeholder="010" style="width:32%;" id="phonenumber2" class="p-2">
+                            <input type="text" placeholder="0000" style="width:32%;" id="textfield6" class="mx-1 p-2">
+                            <input type="text" placeholder="0000" style="width:32%;" id="textfield7" class="p-2">
+                        </div>
+                        <div class="row my-3">
+                            <div style="width:99%;">
+                                <label class="label text-12 cursor-pointer" for="textfield8">주소 *</label><br>
+                                <input type="text" id="textfield8"
+                                    class="border-gray-400 rounded-none text-12 h-9 p-2 col-10" placeholder="주소">
+                                <button type="button" class="btn btn-light font-black h-9"
+                                    style="border-radius:0px; width:15%; height:42.46px;">검색
+                                </button>
+                                <input type="text" id="textfield9"
+                                    class="border-gray-400 rounded-none text-12 h-9 p-2 my-2 w-100"
+                                    placeholder="상세 주소 입력">
+                            </div>
+                        </div>
+                        <div class="dropdown my-3" style="width:99%;">
+                            <label class="label text-12 cursor-pointer" for="baedal">배송시 요청사항</label><br>
+                            <button class="btn border-secondary dropdown-toggle w-100 py-2" id="baedal"
+                                style="text-align:left; border-radius:0px;" type="button" data-bs-toggle="dropdown"
+                                aria-expanded="false">
+                                배송시 요청사항을 선택해주세요
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="#">배송전에 미리 연락 바랍니다.</a></li>
+                                <li><a class="dropdown-item" href="#">부재시 경비실에 맡겨 주세요</a></li>
+                                <li><a class="dropdown-item" href="#">부재시 전화 주시거나 문자 남겨주세요.</a></li>
+                            </ul>
+                        </div>
+                        <hr>
+                        <p class="fs-4 pt-2 fw-bolder">쿠폰 / 적립금</p>
+                        <div class="py-2">
+                            <div class="dropdown">
+                                <label class="label text-12 cursor-pointer py-1" for="coupon">쿠폰 적용 *</label><br>
+                                <button class="btn border-secondary dropdown-toggle w-50 py-2" id="coupon"
+                                    style="text-align:left; border-radius:0px;" type="button" data-bs-toggle="dropdown"
+                                    aria-expanded="false">
+                                    쿠폰 선택
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="#">쿠폰 없음</a></li>
+                                </ul>
+                            </div>
+                            <label class="label text-12 cursor-pointer mt-2" for="textfield10">적립금</label><br>
+                            <input type="text" id="textfield10"
+                                class="border-gray-400 rounded-none text-12 h-9 w-50 p-2" placeholder="0000">
+                            <button type="button" class="btn btn-light font-black h-9"
+                                style="border-radius:0px; width:15%; height:42.46px;">모두 사용
+                            </button>
+                            <a class="fs-6 pt-2 mx-2" style="text-decoration:none; color:black;">사용 가능 : 0원</a>
+
+                        </div>
+                        <!-- <hr>
+                        <p class="fs-4 pt-2 fw-bolder">결제수단 선택</p>
+                        <div class="pay py-2">
+                            <button type="button" class="btn btn-outline-dark py-2"
+                                style="border-radius : 0px; width:170px;">신용카드
+                            </button>
+                            <button type="button" class="btn btn-outline-dark py-2"
+                                style="border-radius : 0px; width:170px;">에스트로
+                                계좌이체
+                            </button>
+                            <button type="button" class="btn btn-outline-dark py-2"
+                                style="border-radius : 0px; width:170px;">카카오 페이
+                            </button>
+                            <button type="button" class="btn btn-outline-dark py-2"
+                                style="border-radius : 0px; width:170px;">네이버 페이
+                            </button>
+                        </div> -->
+                    </form>
+                </div>
+
+                <div class="col-md-3 col-lg-3 order-md-last border border-lightgray mx-5 py-3 h-50"
+                    style="position:sticky; top:50px">
+                    <h4 class="d-flex justify-content-between align-items-center mb-3">
+                        주문상품
+                    </h4>
+                    <div class="list-group-flush mx-auto mb-3">
+                        <div class="list-group-item d-flex justify-content-between my-3 ">
+
+                            <table>
+                                <tr th:each="orderItem : ${orderItems}">
+                                    <td style="width:45%;">
+                                        <img class="w-100 pe-2 h-5" th:src="${orderItem.imgUrl}"
+                                            th:alt="${orderItem.itemNm}">
+                                    </td>
+                                    <td class="mx-2">
+                                        <p th:text="${orderItem.itemNm}"></p>
+                                        <p
+                                            th:text="${#numbers.formatInteger(orderItem.orderPrice*orderItem.count,3,'COMMA')} + '원 / 수량 ' + ${orderItem.count}+'개'">
+                                        </p>
+                                    </td>
+                                </tr>
+                            </table>
+
+                        </div>
+                        <hr class="border">
+                        <div class="list-group-item d-flex justify-content-between my-3">
+                            <div>
+                                <p class="text-12 my-auto py-2">상품 금액</p>
+                            </div>
+
+                            <div>
+                                <p class="text-12 my-auto ms-5 py-2" style="display: inline-block;"
+                                    th:text="${#numbers.formatInteger(requestDto.orderPrice,3,'COMMA')}+'원'">
+                                </p>
+                            </div>
+                        </div>
+                        <div class="list-group-item d-flex justify-content-between my-3">
+                            <div>
+                                <p class="text-12 my-auto py-2">상품 할인</p>
+                            </div>
+
+                            <div>
+                                <p class="text-12 my-auto ms-5 py-2" style="display: inline-block;">
+                                    0원</p>
+                            </div>
+                        </div>
+                        <div class="list-group-item d-flex justify-content-between my-3">
+                            <div>
+                                <p class="text-12 my-auto py-2">쿠폰 할인</p>
+                            </div>
+                            <div>
+                                <p class="text-12 my-auto ms-5 py-2" style="display: inline-block;">
+                                    0원</p>
+                            </div>
+                        </div>
+                        <div class="list-group-item d-flex justify-content-between my-3">
+                            <div>
+                                <p class="text-12 my-auto py-2">적립금 할인</p>
+                            </div>
+                            <div>
+                                <p class="text-12 my-auto ms-5 py-2" style="display: inline-block;">
+                                    0원</p>
+                            </div>
+                        </div>
+                        <div class="list-group-item d-flex justify-content-between my-3">
+                            <div>
+                                <p class="text-12 my-auto py-2">배송비</p>
+                            </div>
+                            <div>
+                                <p class="text-12 my-auto ms-5 py-2" style="display: inline-block;">
+                                    0원</p>
+                            </div>
+                        </div>
+                        <hr class="border">
+                        <div class="list-group-item d-flex justify-content-between">
+                            <span>총 결제 금액</span>
+                            <p class="text-12 text-danger"
+                                th:text="${#numbers.formatInteger(requestDto.orderPrice,3,'COMMA')}+'원'">
+                            </p>
+                        </div>
+                        <hr class="border">
+                        <div class="list-group-item d-flex justify-content-between">
+                            <span>적립 금액</span>
+                            <p class="text-12"
+                                th:text="${#numbers.formatInteger(requestDto.orderPrice*0.01,3,'COMMA')}+' [ 일반 1% ]'">
+                            </p>
+                        </div>
+                    </div>
+
+
+                    <div>
+                        <button class="btn bg-black h-4 w-100" onclick="requestPay()" style="border-radius:0px;">
+                            <p class="text-white text-12 my-auto">주문하기</p>
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+    <form action="/cart/payment" role="form" method="post" th:object="${cartItems}">
+
+        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+    </form>
+</div>
+
+</html>

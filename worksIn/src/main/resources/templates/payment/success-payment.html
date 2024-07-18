@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+    layout:decorate="~{layouts/layout1}">
+
+<head>
+    <meta name="_csrf" th:content="${_csrf.token}" />
+    <meta name="_csrf_header" th:content="${_csrf.headerName}">
+</head>
+<!-- 사용자 CSS 추가 -->
+<th:block layout:fragment="css">
+    <style>
+        body {
+            padding: 0;
+            margin: 0;
+        }
+
+        .container {
+            max-width: 90%;
+            /* 원하는 너비로 조정 */
+        }
+
+        main {
+            padding: 0 20px;
+            /* 좌우 패딩 조정 */
+        }
+
+        .repImg {
+            width: 100%;
+            height: 50px;
+        }
+    </style>
+</th:block>
+<!-- 사용자 스크립트 추가 -->
+<th:block layout:fragment="script">
+    <script th:inline="javascript">
+        $(document).ready(function () {
+            var errorMessage = [[${ errorMessage }]];
+            if (errorMessage != null) {
+                alert(errorMessage);
+            }
+        });
+    </script>
+</th:block>
+<div layout:fragment="content">
+    <div class="row">
+        <div class="m-auto p-5 col-6">
+            <h4 class="py-2 fs-5 fw-bolder">
+                주문상세내역
+            </h4>
+            <hr>
+            <div class="w-100 my-2 row">
+                <p class="col-2 fs-6 fw-light align-self-center">주문번호</p>
+                <p class="col-4 fs-6 align-self-center" th:text="${merchant_uid}"></p>
+                <p class="col-2 fs-6 fw-light align-self-center">주문일자</p>
+                <p class="col-4 fs-6 align-self-center" th:text="${orderDate}"></p>
+            </div>
+            <p class="fs-5 pt-2 fw-bolder">주문 상품 정보</p>
+            <hr>
+            <div class="border border-white table-container">
+                <table class="table border-white">
+                    <thead>
+                        <tr class="table-light row">
+                            <td class="table-light pt-6 text-center col-4">상품</td>
+                            <td class="table-light pt-6 text-center col-2">사이즈</td>
+                            <td class="table-light pt-6 text-center col-2">수량</td>
+                            <td class="table-light pt-6 text-center col-2">가격</td>
+                            <td class="table-light pt-6 text-center col-2">상태</td>
+                        </tr>
+                    </thead>
+                    <tbody class="my-5">
+                        <tr th:each="orderItem : ${orderItemList}" class="row" style="height:50px;">
+                            <td class="d-flex align-middle col-4 px-3">
+                                <div class="repImgDiv">
+                                    <img th:src="${orderItem.imgUrl}" class="rounded repImg" th:alt="${name}">
+                                </div>
+                                <div class="ms-2 m-auto align-middle ">
+                                    <span th:text="${orderItem.itemNm}" class="f24 font-weight-bold"></span>
+                                </div>
+                            </td>
+                            <td class="align-middle text-center col-2 align-middle" style="line-height:50px;">
+                                Free size
+                            </td>
+                            <td class="align-middle text-center col-2" style="line-height:50px;">
+                                <span th:text="${orderItem.count}+'개'"></span>
+                            </td>
+                            <td class="align-middle text-center col-2" style="line-height:50px;">
+                                <span th:text="${orderItem.orderPrice}+'원'"></span>
+                            </td>
+                            <td class="align-middle text-center col-2" style="line-height:50px;">
+                                결제완료
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <p class="py-2 fs-5 fw-bolder">
+                주문자 정보
+            </p>
+            <hr>
+            <div class="w-100 my-2 row">
+                <p class="col-2 fs-6 fw-light align-self-center">이름</p>
+                <p class="col-4 fs-6 align-self-center" th:text="${buyer_name}"></p>
+                <p class="col-2 fs-6 fw-light align-self-center">전화번호</p>
+                <p class="col-4 fs-6 align-self-center" th:text="${buyer_tel}"></p>
+            </div>
+
+            <p class="py-2 fs-5 fw-bolder">
+                배송 정보
+            </p>
+            <hr>
+            <div class="w-100 mt-2 row">
+                <p class="col-2 fs-6 fw-light align-self-center">배송지명</p>
+                <p class="col-4 fs-6 align-self-center" th:text="${shippingName}"></p>
+            </div>
+            <div class="w-100 row">
+                <p class="col-2 fs-6 fw-light align-self-center">수취인 이름</p>
+                <p class="col-4 fs-6 align-self-center" th:text="${recipientName}"></p>
+                <p class="col-2 fs-6 fw-light align-self-center">수취인 전화번호</p>
+                <p class="col-4 fs-6 align-self-center" th:text="${recipientPhone}"></p>
+            </div>
+            <div class="w-100 mb-2 row">
+                <p class="col-2 fs-6 fw-light align-self-center">주소</p>
+                <p class="col-4 fs-6 align-self-center" th:text="${buyer_addr}"></p>
+                <p class="col-2 fs-6 fw-light align-self-center">배송지 요청사항</p>
+                <p class="col-4 fs-6 align-self-center" th:text="${delivery}"></p>
+            </div>
+            <p class="py-2 fs-5 fw-bolder">
+                결제 정보
+            </p>
+            <hr>
+            <div class="w-100 border-bottom row">
+                <p class="col-3 fs-6 fw-light align-self-center">총 주문 금액</p>
+                <p class="col-3 fs-6 text-end" th:text="${amount}"></p>
+                <p class="col-3 fs-6 fw-light align-self-center">총 결제 금액</p>
+                <p class="col-3 fs-6 text-end text-danger" th:text="${amount}"></p>
+            </div>
+            <div class="w-100 border-bottom row pt-2 mb-5">
+                <p class="col-3 fs-6 fw-light align-self-center">상품금액</p>
+                <p class="col-3 fs-6 text-end" th:text="${amount}"></p>
+                <p class="col-3 fs-6 fw-light align-self-center">결제 수단</p>
+                <p class="col-3 fs-6 text-end">신용카드</p>
+                <p class="col-3 fs-6 fw-light align-self-center">배송비</p>
+                <p class="col-3 fs-6 text-end">0원</p>
+                <p class="col-3 fs-6 fw-light align-self-center">결제일</p>
+                <p class="col-3 fs-6 text-end">2024.07.17</p>
+            </div>
+            <button class="button py-2 h-9 outlined-gray-900 my-16 text-12 font-normal w-100 bg-white"
+                onclick="location.href = '/' ">계속 쇼핑하기</button>
+        </div>
+    </div>
+</div>
+
+</html>
