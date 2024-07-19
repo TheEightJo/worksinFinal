@@ -167,7 +167,6 @@
       // 체크된 카트 아이템들을 순회하면서 데이터를 추출하여 paramData에 추가
       $("input[name=cartChkBox]:checked").each(function () {
         var cartItemId = $(this).val();
-        alert("카트 아이템 아이디" + cartItemId);
         // PaymentDto와 일치하는 객체 생성
         var data = {
           cartItemId: cartItemId, // cartItemId 필드에 해당하는 값을 넣음
@@ -389,9 +388,11 @@
                         </button>
                       </td>
                     </tr>
-                    <td th:if="${cartItems}==null" class="my-5 h-9" colspan="5">
-                      <h6 style="text-align: center;">장바구니에 상품이 없습니다.</h6>
-                    </td>
+                    <tr class="my-5 h-10"th:if="${cartItems == null or cartItems.isEmpty()}">
+                      <td colspan="5" >
+                        <h5 style="text-align: center;">장바구니에 상품이 없습니다.</h5>
+                      </td>
+                    </tr>
                   </tbody>
                   <tfoot>
                     <tr>

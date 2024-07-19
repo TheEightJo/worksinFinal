@@ -43,7 +43,7 @@
 </th:block>
 <div layout:fragment="content">
     <div class="row">
-        <div class="m-auto p-5 col-6">
+        <div class="m-auto p-5 col-8">
             <h4 class="py-2 fs-5 fw-bolder">
                 주문상세내역
             </h4>
@@ -130,19 +130,19 @@
             <hr>
             <div class="w-100 border-bottom row">
                 <p class="col-3 fs-6 fw-light align-self-center">총 주문 금액</p>
-                <p class="col-3 fs-6 text-end" th:text="${amount}"></p>
+                <p class="col-3 fs-6 text-end" th:text="${amount}+'원'"></p>
                 <p class="col-3 fs-6 fw-light align-self-center">총 결제 금액</p>
-                <p class="col-3 fs-6 text-end text-danger" th:text="${amount}"></p>
+                <p class="col-3 fs-6 text-end text-danger" th:text="${amount}+'원'"></p>
             </div>
             <div class="w-100 border-bottom row pt-2 mb-5">
                 <p class="col-3 fs-6 fw-light align-self-center">상품금액</p>
-                <p class="col-3 fs-6 text-end" th:text="${amount}"></p>
+                <p class="col-3 fs-6 text-end" th:text="${amount}+'원'"></p>
                 <p class="col-3 fs-6 fw-light align-self-center">결제 수단</p>
                 <p class="col-3 fs-6 text-end">신용카드</p>
                 <p class="col-3 fs-6 fw-light align-self-center">배송비</p>
                 <p class="col-3 fs-6 text-end">0원</p>
                 <p class="col-3 fs-6 fw-light align-self-center">결제일</p>
-                <p class="col-3 fs-6 text-end">2024.07.17</p>
+                <p class="col-3 fs-6 text-end" th:text="${#dates.format(payTime, 'yyyy-MM-dd HH:mm:ss')}"></p>
             </div>
             <button class="button py-2 h-9 outlined-gray-900 my-16 text-12 font-normal w-100 bg-white"
                 onclick="location.href = '/' ">계속 쇼핑하기</button>

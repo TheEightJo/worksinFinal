@@ -1,8 +1,8 @@
 package com.WorksIn.controller;
 
-import com.WorksIn.dto.OrderHistDto;
-import com.WorksIn.dto.PaymentCallbackRequest;
-import com.WorksIn.dto.PaymentDto;
+import com.WorksIn.dto.*;
+import com.WorksIn.entity.Member;
+import com.WorksIn.service.MemberService;
 import com.WorksIn.service.OrderService;
 import com.WorksIn.service.PaymentService;
 import com.siot.IamportRestClient.response.IamportResponse;
@@ -15,6 +15,8 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Date;
+
 
 @Controller
 @Slf4j
@@ -23,6 +25,7 @@ public class PaymentController {
 
     private final PaymentService paymentService;
     private final OrderService orderService;
+    private final MemberService memberService;
 
 
     @GetMapping("/cart/payment/{id}")
@@ -37,6 +40,7 @@ public class PaymentController {
         System.out.println("주소 ============= "+requestDto.getBuyerAddress());
         System.out.println("이메일 ============= "+requestDto.getBuyerEmail());
 
+
         model.addAttribute("orderItems",orderHistDto.getOrderItemDtoList());
         model.addAttribute("requestDto", requestDto);
         model.addAttribute("name", requestDto.getBuyerName());
@@ -48,13 +52,17 @@ public class PaymentController {
     public ResponseEntity<IamportResponse<Payment>> validationPayment(@RequestBody PaymentCallbackRequest request) {
         System.out.println("postmapping badnya?");
         IamportResponse<Payment> iamportResponse = paymentService.paymentByCallback(request);
+        System.out.println(iamportResponse.getResponse().getPaidAt());
+        System.out.println(iamportResponse.getResponse().getPgTid());
+        System.out.println(iamportResponse.getResponse().getImpUid());
         System.out.println("결제 포스트매핑 받냐??");
         log.info("결제 응답={}", iamportResponse.getResponse().toString());
 
         return new ResponseEntity<>(iamportResponse, HttpStatus.OK);
     }
     @GetMapping("/success-payment")
-    public String successPaymentPage(@RequestParam("merchant_uid") String merchantUid,
+    public String successPaymentPage(@RequestParam("payTime") Date payTime,
+                                     @RequestParam("merchant_uid") String merchantUid,
                                      @RequestParam("name") String name,
                                      @RequestParam("amount") String amount,
                                      @RequestParam("buyer_email") String buyerEmail,
@@ -68,6 +76,8 @@ public class PaymentController {
                                      Model model) {
         OrderHistDto orderHistDto = orderService.getPaymentOrderList(merchantUid);
         System.out.println(orderHistDto.getOrderItemDtoList().size());
+        System.out.println("결제 시간: " + payTime);
+        model.addAttribute("payTime",payTime);
         model.addAttribute("orderItemList",orderHistDto.getOrderItemDtoList());
         model.addAttribute("orderDate",orderHistDto.getOrderDate());
         model.addAttribute("merchant_uid", merchantUid);

@@ -2,6 +2,7 @@ package com.WorksIn.controller;
 
 import com.WorksIn.dto.OrderDto;
 import com.WorksIn.dto.OrderHistDto;
+import com.WorksIn.service.CartService;
 import com.WorksIn.service.OrderService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -24,10 +25,12 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class OrderController {
     private final OrderService orderService;
+    private final CartService cartService;
 
     @PostMapping(value = "/order")
     public @ResponseBody ResponseEntity order(@RequestBody @Valid OrderDto orderDto, BindingResult bindingResult,
                                               Principal principal) {
+        System.out.println("안녕 나는 포스트매핑 /order라고해");
 
         if (bindingResult.hasErrors()) {
             StringBuilder sb = new StringBuilder();
@@ -39,15 +42,23 @@ public class OrderController {
         }
         // 로그인 정보 -> Spring Security
         // principal.getName() (현재 로그인된 정보)
-        String email = principal.getName();
-        Long orderId;
+        String email = emailChk(principal);
+        String orderUid;
+        System.out.println("안녕 나는 orderUid야" + email);
         try {
-            orderId = orderService.order(orderDto, email);
+            orderUid = orderService.order(orderDto, email).getOrderUid();
         } catch (Exception e) {
             return new ResponseEntity<String>(e.getMessage(), HttpStatus.BAD_REQUEST);
         }
-        return new ResponseEntity<Long>(orderId, HttpStatus.OK);
+        return new ResponseEntity<String>(orderUid, HttpStatus.OK);
 
+    }
+    public String emailChk(Principal principal) {
+        String email = principal.getName();
+        if (!email.contains("@")) {
+            email = cartService.EmailSend();
+        }
+        return email;
     }
 
     @GetMapping(value = {"/orders", "/orders/{page}"})

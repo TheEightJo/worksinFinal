@@ -86,7 +86,6 @@
                     itemId: $("#itemId").val(),
                     count: $("#count").val()
                 }
-
                 var param = JSON.stringify(paramData);
 
                 $.ajax({
@@ -95,14 +94,16 @@
                     contentType: "application/json",
                     data: param,
                     beforeSend: function (xhr) {
-                        /*데이터 전송하기 전에 헤더에 csrf 값을 설정*/
+
                         xhr.setRequestHeader(header, token);
                     },
-                    dataType: "json",
+
                     cache: false,
                     success: function (result, status) {
+
+                        var orderUid = result;
                         alert("주문이 완료 되었습니다.");
-                        location.href = '/';
+                        location.href = '/cart/payment/' + orderUid;
                     },
                     error: function (jqXHR, status, error) {
                         if (jqXHR.status == '401') {
@@ -110,10 +111,12 @@
                             location.href = '/members/login';
                         } else {
                             alert(jqXHR.responseText);
+
                         }
                     }
                 });
             }
+
 
             function addCart() {
                 var token = $("meta[name='_csrf']").attr("content");

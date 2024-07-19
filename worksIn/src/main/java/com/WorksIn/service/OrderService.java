@@ -28,7 +28,7 @@ public class OrderService {
     private final ItemImgRepository itemImgRepository;
     private final PaymentRepository paymentRepository;
 
-    public Long order(OrderDto orderDto, String email) {
+    public Order order(OrderDto orderDto, String email) {
         Item item = itemRepository.findById(orderDto.getItemId())
                 .orElseThrow(EntityNotFoundException::new);
         Member member = memberRepository.findByEmail(email);
@@ -39,7 +39,11 @@ public class OrderService {
 
         Order order = Order.createOrder(member, orderItemList);
         orderRepository.save(order);
-        return order.getId();
+
+        order.setPayment(paymentOrder(order.getOrderUid()));
+        // 주문서에 결제정보 넣어버리기
+
+        return orderRepository.save(order);
     }
 
 

@@ -88,14 +88,8 @@
             var buyerName = [[${ requestDto.buyerName }]];
             var buyerEmail = [[${ requestDto.buyerEmail }]];
             var buyerAddress = [[${ requestDto.buyerAddress }]];
-
-            console.log(orderUid);
-            console.log(itemName);
-            console.log(paymentPrice);
-            console.log(buyerName);
-            console.log(buyerEmail);
-            console.log(buyerAddress);
-
+            var deliveryAddr = $('#textfield8').val();
+            var deliveryAddr2 = $('#textfield9').val();
 
             IMP.request_pay({
                 pg: 'html5_inicis.INIpayTest',
@@ -106,7 +100,7 @@
                 buyer_email: buyerEmail, // 구매자 이메일
                 buyer_name: buyerName, // 구매자 이름
                 buyer_tel: buyerPhone, // 임의의 값
-                buyer_addr: '인천시', // 구매자 주소
+                buyer_addr: deliveryAddr, // 구매자 주소
                 buyer_postcode: '123-456', // 임의의 값
                 custom_data: {
                     delivery_request: selectedOption, // 선택한 배송 요청사항
@@ -117,7 +111,6 @@
                 function (rsp) {
                     console.log("aaaaa");
                     if (rsp.success) {
-                        alert('call back!!: ' + JSON.stringify(rsp));
                         // 결제 성공 시: 결제 승인 또는 가상계좌 발급에 성공한 경우
                         // jQuery로 HTTP 요청
                         $.ajax({
@@ -133,16 +126,19 @@
                             })
                         }).done(function (response) {
                             console.log(response);
+                            var payTime = new Date(response.response.paidAt);
+                            console.log("paytime : "+payTime);
                             // 가맹점 서버 결제 API 성공시 로직
-                            alert('결제 완료!' + JSON.stringify(rsp));
+                            alert('결제 완료!');
                             window.location.href = "/success-payment?" +
                                 "merchant_uid=" + encodeURIComponent(orderUid) +
+                                "&payTime=" + encodeURIComponent(payTime) +
                                 "&name=" + encodeURIComponent(itemName) +
                                 "&amount=" + encodeURIComponent(paymentPrice) +
                                 "&buyer_email=" + encodeURIComponent(buyerEmail) +
                                 "&buyer_name=" + encodeURIComponent(buyerName) +
                                 "&buyer_tel=" + encodeURIComponent(buyerPhone) +
-                                "&buyer_addr=" + encodeURIComponent('인천시') +
+                                "&buyer_addr=" + encodeURIComponent(deliveryAddr+' '+deliveryAddr2) +
                                 "&delivery_request=" + encodeURIComponent(selectedOption) +
                                 "&shipping_name=" + encodeURIComponent(shippingName) +
                                 "&recipient_name=" + encodeURIComponent(recipientName) +
@@ -217,7 +213,7 @@
                             <div style="width:99%;">
                                 <label class="label text-12 cursor-pointer" for="textfield8">주소 *</label><br>
                                 <input type="text" id="textfield8"
-                                    class="border-gray-400 rounded-none text-12 h-9 p-2 col-10" placeholder="주소">
+                                    class="border-gray-400 rounded-none text-12 h-9 p-2 col-10" placeholder="주소" th:value="${requestDto.buyerAddress}">
                                 <button type="button" class="btn btn-light font-black h-9"
                                     style="border-radius:0px; width:15%; height:42.46px;">검색
                                 </button>
