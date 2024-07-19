@@ -102,7 +102,6 @@
                     success: function (result, status) {
 
                         var orderUid = result;
-                        alert("주문이 완료 되었습니다.");
                         location.href = '/cart/payment/' + orderUid;
                     },
                     error: function (jqXHR, status, error) {
