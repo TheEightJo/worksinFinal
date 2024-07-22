@@ -68,12 +68,12 @@ public class MemberController {
 
     @GetMapping(value = "/login")
     public String loginMember(){
-        return "/member/memberLoginForm";
+        return "member/memberLoginForm";
     }
     @GetMapping(value = "/login/error")
     public String loginError(Model model){
         model.addAttribute("loginErrorMsg","아이디 또는 비밀번호를 확인해주세요");
-        return "/member/memberLoginForm";
+        return "member/memberLoginForm";
     }
     @GetMapping(value = "/modify")
     public String memberUpdateForm(Model model,Principal principal){
@@ -122,7 +122,7 @@ public class MemberController {
         }
         else{
             model.addAttribute("wrongPassword", "비밀번호가 맞지 않습니다.");
-            return "/member/withdrawal";
+            return "member/withdrawal";
         }
     }
 

@@ -97,7 +97,7 @@ public class PaymentController {
         System.out.println(recipientName);
         System.out.println(recipientPhone);
 
-        return "/payment/success-payment";
+        return "payment/success-payment";
     }
 
     @GetMapping("/fail-payment")

@@ -372,8 +372,8 @@
     <div class="container">
         <div class="slideshow-container">
             <!-- 각 이미지 슬라이드 -->
-            <div th:each="itemImg, itemIndex : ${item.itemImgDtoList}" class="mySlides">
-                <img th:if="${not #strings.isEmpty(itemImg.imgUrl)}" th:src="${itemImg.imgUrl}">
+            <div th:each="itemImg, itemIndex : ${item.itemImgDtoList}" class="mySlides" th:if="${not #strings.isEmpty(itemImg.imgUrl)}">
+                <img th:src="${itemImg.imgUrl}">
             </div>
 
             <!-- 이전/다음 버튼 -->

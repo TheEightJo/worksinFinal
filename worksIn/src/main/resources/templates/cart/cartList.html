@@ -155,7 +155,6 @@
       })
     }
     function orders() {
-      alert("abc");
       var token = $("meta[name='_csrf']").attr("content");
       var header = $("meta[name='_csrf_header']").attr("content");
 
@@ -182,7 +181,6 @@
 
       paramData['cartOrderDtoList'] = dataList; // paramData 객체에 dataList 추가
       var param = JSON.stringify(paramData); // JSON 문자열로 변환
-      alert(param);
       $.ajax({
         url: url,
         type: "POST",

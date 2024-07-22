@@ -18,20 +18,6 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class MainController {
     private final ItemService itemService;
-    /*
-    @GetMapping(value = "/")
-    public String main(ItemSearchDto itemSearchDto, Optional<Integer> page, Model model){
-        Pageable pageable = PageRequest.of(page.isPresent() ? page.get() : 0,100);
-        Page<MainItemDto> items = itemService.getMainItemPage(itemSearchDto, pageable);
-        System.out.println(items.getNumber()+"!!!!!!!!!!!!");
-        System.out.println(items.getTotalPages()+"############");
-        model.addAttribute("items",items);
-        model.addAttribute("itemSearchDto",itemSearchDto);
-        model.addAttribute("maxPage",5);
-        return "main";
-    }
-
-     */
 
     @GetMapping(value = "/")
     public String main(ItemSearchDto itemSearchDto, Model model,
