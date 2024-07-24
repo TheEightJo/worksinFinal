@@ -173,8 +173,8 @@
                                 <label class="label text-12 cursor-pointer " for="textfield1">이름 *</label><br>
                                 <div th:if="${name != null}">
                                     <input type="text" id="textfield1"
-                                        class="border-gray-400 w-full rounded-none text-12 h-9 w-100 p-2"
-                                        th:value="${name}" readonly style="background-color:lightgray;">
+                                        class="border border-secondary w-full bg-light rounded-none text-12 h-9 w-100 p-2"
+                                        th:value="${name}" readonly>
                                 </div>
                                 <div th:if="${name == null}">
                                     <input type="text" id="textfield"
@@ -189,9 +189,9 @@
                             </div>
                             <div th:if="${tel != null}" class="col row">
                                 <label class="label text-12 cursor-pointer" for="phone1">핸드폰 번호 *</label><br>
-                                <input type="text" id="phone1" class="col-sm mx-1 p-2" style="background-color:lightgray;" th:value="${tel.substring(0, 3)}" readonly>
-                                <input type="text" id="phone2" class="col-sm mx-1 p-2" style="background-color:lightgray;" th:value="${tel.substring(3, 7)}" readonly>
-                                <input type="text" id="phone3" class="col-sm mx-1 p-2" style="background-color:lightgray;" th:value="${tel.substring(7)}" readonly>
+                                <input type="text" id="phone1" class="col-sm mx-1 p-2 bg-light border border-secondary" th:value="${tel.substring(0, 3)}" readonly>
+                                <input type="text" id="phone2" class="col-sm mx-1 p-2 bg-light border border-secondary" th:value="${tel.substring(3, 7)}" readonly>
+                                <input type="text" id="phone3" class="col-sm mx-1 p-2 bg-light border border-secondary" th:value="${tel.substring(7)}" readonly>
                             </div>
 
                         </div>
