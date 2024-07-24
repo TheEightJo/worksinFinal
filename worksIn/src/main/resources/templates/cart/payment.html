@@ -29,7 +29,7 @@
         let shippingName = ''; //배송지명
         let recipientName = ''; //수취인명
         let recipientPhone = ''; // 수취인폰
-        let buyerPhone = ''; //구매자 폰
+        let buyerPhone = [[${ requestDto.tel }]]; //구매자 폰
 
 
         document.addEventListener('DOMContentLoaded', (event) => {
@@ -45,10 +45,11 @@
                     console.log('Selected Option:', selectedOption);
                 });
             });
-
+            if(buyerPhone == null){
             document.getElementById('phonenumber').addEventListener('input', updateBuyerPhone);
             document.getElementById('textfield2').addEventListener('input', updateBuyerPhone);
             document.getElementById('textfield3').addEventListener('input', updateBuyerPhone);
+            }
             document.getElementById('phonenumber2').addEventListener('input', updateRecipientPhone);
             document.getElementById('textfield6').addEventListener('input', updateRecipientPhone);
             document.getElementById('textfield7').addEventListener('input', updateRecipientPhone);
@@ -180,12 +181,19 @@
                                         class="border-gray-400 w-full rounded-none text-12 h-9 w-100 p-2">
                                 </div>
                             </div>
-                            <div class="col row">
+                            <div th:if="${tel == null}" class="col row">
                                 <label class="label text-12 cursor-pointer" for="phonenumber">핸드폰 번호 *</label><br>
                                 <input type="text" id="phonenumber" class="col-sm mx-1 p-2" placeholder="010">
                                 <input type="text" id="textfield2" class="col-sm  mx-1 p-2" placeholder="0000">
                                 <input type="text" id="textfield3" class="col-sm  mx-1 p-2" placeholder="0000">
                             </div>
+                            <div th:if="${tel != null}" class="col row">
+                                <label class="label text-12 cursor-pointer" for="phone1">핸드폰 번호 *</label><br>
+                                <input type="text" id="phone1" class="col-sm mx-1 p-2" style="background-color:lightgray;" th:value="${tel.substring(0, 3)}" readonly>
+                                <input type="text" id="phone2" class="col-sm mx-1 p-2" style="background-color:lightgray;" th:value="${tel.substring(3, 7)}" readonly>
+                                <input type="text" id="phone3" class="col-sm mx-1 p-2" style="background-color:lightgray;" th:value="${tel.substring(7)}" readonly>
+                            </div>
+
                         </div>
                         <hr>
                         <p class="fs-4 pt-2 fw-bolder">배송 정보</p>

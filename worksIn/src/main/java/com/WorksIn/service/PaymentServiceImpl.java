@@ -44,6 +44,7 @@ public class PaymentServiceImpl implements PaymentService {
                 .itemNm(order.getItemNm())
                 .orderUid(order.getOrderUid())
                 .imgUrl(order.getImgUrl())
+                .tel(order.getMember().getTel())
                 .build();
     }
 

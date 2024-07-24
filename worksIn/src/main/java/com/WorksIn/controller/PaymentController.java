@@ -15,7 +15,9 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 
 @Controller
@@ -39,11 +41,14 @@ public class PaymentController {
         System.out.println("아이템이름 ============= "+requestDto.getItemNm());
         System.out.println("주소 ============= "+requestDto.getBuyerAddress());
         System.out.println("이메일 ============= "+requestDto.getBuyerEmail());
+        System.out.println("이메일 ============= "+requestDto.getTel());
+
 
 
         model.addAttribute("orderItems",orderHistDto.getOrderItemDtoList());
         model.addAttribute("requestDto", requestDto);
         model.addAttribute("name", requestDto.getBuyerName());
+        model.addAttribute("tel",requestDto.getTel());
         return "cart/payment";
     }
 

@@ -18,11 +18,13 @@ public class PaymentDto {
     private String buyerAddress;
     private String orderUid;
     private String imgUrl;
+    private String tel;
 
 
     @Builder
     public PaymentDto(String itemNm, String buyerName, int count,
-                      int orderPrice, String buyerEmail, String buyerAddress, String orderUid, String imgUrl) {
+                      int orderPrice, String buyerEmail, String buyerAddress, String orderUid, String imgUrl,
+                      String tel) {
         this.itemNm = itemNm;
         this.buyerName = buyerName;
         this.count = count;
@@ -31,5 +33,6 @@ public class PaymentDto {
         this.buyerAddress = buyerAddress;
         this.orderUid = orderUid;
         this.imgUrl = imgUrl;
+        this.tel = tel;
     }
 }
